@@ -178,6 +178,7 @@ export const generateDesigns = async (parts: Part[], config: MachineConfig): Pro
   }, 3, 3000); // 3 retries, 3 second base delay
 };
 
+
 export const generateImageForDesign = async (
   design: MachineDesign,
   config: MachineConfig
@@ -208,14 +209,9 @@ export const generateImageForDesign = async (
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
-        contents: { parts: [{ text: prompt }] },
-        config: {
-          imageConfig: {
-            aspectRatio: "1:1",
-            imageSize: "1K"
-          }
-        }
+        contents: { parts: [{ text: prompt }] }
       });
+
       for (const candidate of response.candidates) {
         for (const part of candidate.content.parts) {
           if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
@@ -242,7 +238,7 @@ export const generatePartDocumentation = async (partName: string): Promise<strin
       const prompt = `Detailed technical line art blueprint of ${partName}. Schematic lines only, dark grid background.`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'gemini-2.5-flash',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
