@@ -40,8 +40,13 @@ const ApiKeyManagerComponent: React.FC<ApiKeyManagerProps> = ({ onClose, onKeyCh
     };
 
     const handleDeleteKey = (id: string) => {
-        if (confirm('Are you sure you want to delete this API key?')) {
-            ApiKeyManager.delete(id);
+        console.log('[ApiKeyManager] Delete clicked for key ID:', id);
+        const confirmed = window.confirm('Are you sure you want to delete this API key?');
+        console.log('[ApiKeyManager] User confirmed:', confirmed);
+        if (confirmed) {
+            console.log('[ApiKeyManager] Deleting key...');
+            const result = ApiKeyManager.delete(id);
+            console.log('[ApiKeyManager] Delete result:', result);
             loadKeys();
             onKeyChanged?.();
         }
