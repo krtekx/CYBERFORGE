@@ -15,6 +15,7 @@ const ApiKeyManagerComponent: React.FC<ApiKeyManagerProps> = ({ onClose, onKeyCh
     const [editName, setEditName] = useState('');
     const [editKey, setEditKey] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     const loadKeys = () => {
         setKeys(ApiKeyManager.getAll());
@@ -40,16 +41,24 @@ const ApiKeyManagerComponent: React.FC<ApiKeyManagerProps> = ({ onClose, onKeyCh
     };
 
     const handleDeleteKey = (id: string) => {
-        console.log('[ApiKeyManager] Delete clicked for key ID:', id);
-        const confirmed = window.confirm('Are you sure you want to delete this API key?');
-        console.log('[ApiKeyManager] User confirmed:', confirmed);
-        if (confirmed) {
-            console.log('[ApiKeyManager] Deleting key...');
-            const result = ApiKeyManager.delete(id);
+        console.log('[ApiKeyManager] Delete button clicked, showing confirmation modal for ID:', id);
+        setDeleteConfirmId(id);
+    };
+
+    const confirmDelete = () => {
+        if (deleteConfirmId) {
+            console.log('[ApiKeyManager] Deleting key:', deleteConfirmId);
+            const result = ApiKeyManager.delete(deleteConfirmId);
             console.log('[ApiKeyManager] Delete result:', result);
+            setDeleteConfirmId(null);
             loadKeys();
             onKeyChanged?.();
         }
+    };
+
+    const cancelDelete = () => {
+        console.log('[ApiKeyManager] Delete cancelled');
+        setDeleteConfirmId(null);
     };
 
     const handleSetActive = (id: string) => {
@@ -428,6 +437,109 @@ const ApiKeyManagerComponent: React.FC<ApiKeyManagerProps> = ({ onClose, onKeyCh
                     <strong style={{ color: '#00ff88' }}>💡 TIP:</strong> You can add multiple API keys from different Google accounts.
                     Switch between them to avoid rate limits. Your keys are stored locally in your browser.
                 </div>
+
+                {/* Delete Confirmation Modal */}
+                {deleteConfirmId && (
+                    <div style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.95)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 20000
+                    }}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #1a0a0a 0%, #2e1a1a 100%)',
+                            border: '3px solid #ff4444',
+                            borderRadius: '12px',
+                            padding: '32px',
+                            maxWidth: '400px',
+                            boxShadow: '0 0 60px rgba(255, 68, 68, 0.5)',
+                            animation: 'pulse 2s infinite'
+                        }}>
+                            <h3 style={{
+                                color: '#ff4444',
+                                marginTop: 0,
+                                marginBottom: '16px',
+                                fontSize: '20px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '2px',
+                                textAlign: 'center'
+                            }}>
+                                ⚠️ CONFIRM DELETE
+                            </h3>
+                            <p style={{
+                                color: '#ccc',
+                                marginBottom: '24px',
+                                fontSize: '14px',
+                                lineHeight: '1.6',
+                                textAlign: 'center'
+                            }}>
+                                Are you sure you want to delete this API key?
+                                <br />
+                                <strong style={{ color: '#ff4444' }}>This action cannot be undone.</strong>
+                            </p>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button
+                                    onClick={cancelDelete}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 24px',
+                                        background: 'transparent',
+                                        border: '2px solid #666',
+                                        borderRadius: '6px',
+                                        color: '#666',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        textTransform: 'uppercase',
+                                        transition: 'all 0.3s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = '#666';
+                                        e.currentTarget.style.color = '#000';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = 'transparent';
+                                        e.currentTarget.style.color = '#666';
+                                    }}
+                                >
+                                    CANCEL
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 24px',
+                                        background: '#ff4444',
+                                        border: '2px solid #ff4444',
+                                        borderRadius: '6px',
+                                        color: '#fff',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        textTransform: 'uppercase',
+                                        transition: 'all 0.3s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = '#ff0000';
+                                        e.currentTarget.style.borderColor = '#ff0000';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = '#ff4444';
+                                        e.currentTarget.style.borderColor = '#ff4444';
+                                    }}
+                                >
+                                    DELETE
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
