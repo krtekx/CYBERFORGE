@@ -239,13 +239,58 @@ const App: React.FC = () => {
     setIsExporting(true);
     try {
       for (const design of targets) {
-        if (design.images && design.images[0]) {
-          const blob = await convertToWebPBlobWithMetadata(design.images[0], design);
+        // Create a placeholder image if none exists
+        let imageData = design.images && design.images[0];
+
+        if (!imageData) {
+          // Generate a simple placeholder canvas
+          const canvas = document.createElement('canvas');
+          canvas.width = 1024;
+          canvas.height = 1024;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Dark background
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid pattern
+            ctx.strokeStyle = '#1a1a2e';
+            ctx.lineWidth = 2;
+            for (let x = 0; x < canvas.width; x += 50) {
+              ctx.beginPath();
+              ctx.moveTo(x, 0);
+              ctx.lineTo(x, canvas.height);
+              ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 50) {
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(canvas.width, y);
+              ctx.stroke();
+            }
+
+            // Text placeholder
+            ctx.fillStyle = '#00f3ff';
+            ctx.font = 'bold 48px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('CYBERFORGE', canvas.width / 2, canvas.height / 2 - 100);
+            ctx.fillStyle = '#666';
+            ctx.font = '32px monospace';
+            ctx.fillText('IMAGE GENERATION PENDING', canvas.width / 2, canvas.height / 2);
+            ctx.fillText('TEXT DATA EXPORT', canvas.width / 2, canvas.height / 2 + 50);
+
+            imageData = canvas.toDataURL('image/png');
+          }
+        }
+
+        if (imageData) {
+          const blob = await convertToWebPBlobWithMetadata(imageData, design);
           const sanitizedName = design.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
           downloadFile(blob, `${sanitizedName}_blueprint.webp`);
           await new Promise(r => setTimeout(r, 400)); // Paced downloads
         }
       }
+      alert(`Successfully exported ${targets.length} blueprint(s)!`);
     } catch (e) {
       console.error("Batch Export Error:", e);
       alert("EXPORT_PROTOCOL_ERROR: Datasheet generation failed.");
