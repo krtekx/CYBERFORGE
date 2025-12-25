@@ -4,6 +4,7 @@ import PartSelector from './components/PartSelector';
 import PartDetailPopup from './components/PartDetailPopup';
 import SynthesisProgress from './components/SynthesisProgress';
 import ApiKeyManagerComponent from './components/ApiKeyManager';
+import { LoginScreen } from './components/LoginScreen';
 import { generateDesigns, generateImageForDesign } from './services/geminiService';
 import { ApiKeyManager } from './services/apiKeyManager';
 import { COMMON_PARTS } from './constants';
@@ -200,6 +201,10 @@ const App: React.FC = () => {
   const [identityName, setIdentityName] = useState("GUEST_AGENT");
   const [showApiKeyManager, setShowApiKeyManager] = useState(false);
   const [activeApiKeyName, setActiveApiKeyName] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Check if user was authenticated in this session
+    return sessionStorage.getItem('cyberforge_authenticated') === 'true';
+  });
 
   useEffect(() => {
     const checkKey = async () => {
@@ -346,7 +351,17 @@ const App: React.FC = () => {
     }
   }, [designs, status, config, isImageLoading]);
 
+  const handleLogin = () => {
+    sessionStorage.setItem('cyberforge_authenticated', 'true');
+    setIsAuthenticated(true);
+  };
+
   const activeDesign = activeDesignIndex >= 0 ? designs[activeDesignIndex] : null;
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#050505] text-gray-300 flex flex-col overflow-x-hidden selection:bg-[#00f3ff] selection:text-black font-mono">
@@ -469,7 +484,7 @@ const App: React.FC = () => {
                   </div>
 
                   <button
-                    onClick={handleManualBatchSave} disabled={isExporting || isImageLoading || designs.length === 0}
+                    onClick={handleManualBatchSave} disabled={isExporting || isImageLoading}
                     className="px-12 py-5 bg-[#ff00ff] text-white text-[13px] font-black uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all flex items-center gap-5 shadow-[0_0_30px_#ff00ff44] disabled:opacity-50"
                   >
                     {isExporting ? <span className="animate-pulse">ENCODING_WEBP...</span> : <><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> EXPORT_ALL_BLUEPRINTS</>}
@@ -491,7 +506,68 @@ const App: React.FC = () => {
                       )}
                     </div>
                     <div className="bg-[#0a0a0f]/50 p-10 border border-white/5 space-y-6">
-                      <h2 className="text-5xl font-black text-white cyber-font italic uppercase tracking-tighter glitch-text">{activeDesign.name}</h2>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <h2 className="text-5xl font-black text-white cyber-font italic uppercase tracking-tighter glitch-text">{activeDesign.name}</h2>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            setIsExporting(true);
+                            try {
+                              let imageData = activeDesign.images && activeDesign.images[0];
+                              if (!imageData) {
+                                const canvas = document.createElement('canvas');
+                                canvas.width = 1024;
+                                canvas.height = 1024;
+                                const ctx = canvas.getContext('2d');
+                                if (ctx) {
+                                  ctx.fillStyle = '#0a0a0f';
+                                  ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                  ctx.strokeStyle = '#1a1a2e';
+                                  ctx.lineWidth = 2;
+                                  for (let x = 0; x < canvas.width; x += 50) {
+                                    ctx.beginPath();
+                                    ctx.moveTo(x, 0);
+                                    ctx.lineTo(x, canvas.height);
+                                    ctx.stroke();
+                                  }
+                                  for (let y = 0; y < canvas.height; y += 50) {
+                                    ctx.beginPath();
+                                    ctx.moveTo(0, y);
+                                    ctx.lineTo(canvas.width, y);
+                                    ctx.stroke();
+                                  }
+                                  ctx.fillStyle = '#00f3ff';
+                                  ctx.font = 'bold 48px monospace';
+                                  ctx.textAlign = 'center';
+                                  ctx.fillText('CYBERFORGE', canvas.width / 2, canvas.height / 2 - 100);
+                                  ctx.fillStyle = '#666';
+                                  ctx.font = '32px monospace';
+                                  ctx.fillText('IMAGE GENERATION PENDING', canvas.width / 2, canvas.height / 2);
+                                  ctx.fillText('TEXT DATA EXPORT', canvas.width / 2, canvas.height / 2 + 50);
+                                  imageData = canvas.toDataURL('image/png');
+                                }
+                              }
+                              if (imageData) {
+                                const blob = await convertToWebPBlobWithMetadata(imageData, activeDesign);
+                                const sanitizedName = activeDesign.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                                downloadFile(blob, `blueprint_${sanitizedName}.webp`);
+                                alert('Blueprint exported successfully!');
+                              }
+                            } catch (e) {
+                              console.error('Export Error:', e);
+                              alert('Export failed. Check console for details.');
+                            } finally {
+                              setIsExporting(false);
+                            }
+                          }}
+                          disabled={isExporting}
+                          className="px-6 py-3 bg-[#00f3ff] text-black text-[11px] font-black uppercase tracking-[0.2em] hover:bg-white transition-all flex items-center gap-3 disabled:opacity-50 shrink-0"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                          SAVE WEBP
+                        </button>
+                      </div>
                       <p className="text-[16px] text-gray-400 leading-relaxed font-mono uppercase italic border-l-2 border-[#00f3ff33] pl-6 py-2">"{activeDesign.description}"</p>
                     </div>
                   </div>

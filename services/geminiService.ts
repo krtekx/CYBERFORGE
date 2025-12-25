@@ -110,9 +110,9 @@ export const generateDesigns = async (parts: Part[], config: MachineConfig): Pro
     const ai = new GoogleGenAI({ apiKey });
 
     const difficultyReq = {
-      'Easy': "Simple 3-5 part assembly. Direct logic.",
-      'Moderate': "Balanced 5-10 part circuit. Functional prototype.",
-      'Hard': "Advanced 10-15 part system. High complexity, tight integration."
+      'Easy': "BEGINNER BUILD: Construction material + 1-3 electronic components ONLY (total 2-4 BOM items). Minimal assembly, direct connections. Perfect for first-time builders. Example: Plywood frame + ESP32 + LED.",
+      'Moderate': "INTERMEDIATE BUILD: Construction + 5-8 electronic parts total. Balanced complexity with resistors, LEDs, sensors. Requires basic soldering skills.",
+      'Hard': "ADVANCED BUILD: Construction + 10-15 parts total. Complex system with multiple subsystems, advanced integration, sophisticated functionality. Expert-level project."
     }[config.difficulty];
 
     const powerPrompt = config.useBattery
@@ -197,11 +197,19 @@ export const generateImageForDesign = async (
 
     const accents = `${config.brassWires ? 'EXPOSED POINT-TO-POINT BRASS WIRING.' : ''} ${config.brassLight ? 'WARM BRASS FILAMENT LIGHT HOUSINGS.' : ''}`;
 
+    // Visual complexity based on difficulty
+    const visualComplexity = {
+      'Easy': "MINIMAL DESIGN: Show ONLY 2-3 visible electronic components on a simple construction base. Clean, spacious layout with lots of empty space. Beginner-friendly appearance. Very few wires, direct connections only.",
+      'Moderate': "BALANCED DESIGN: Show 5-8 visible components with moderate wiring. Organized layout with clear component placement. Some complexity but still readable.",
+      'Hard': "COMPLEX DESIGN: Show 10-15+ densely packed components with intricate wiring. Advanced integration, multiple subsystems visible. Professional, sophisticated appearance with tight component spacing."
+    }[config.difficulty];
+
     const prompt = `
     MASTERPIECE INDUSTRIAL PRODUCT PHOTOGRAPHY. 
     Machine: "${design.name}". 
     Style: ${materialAesthetic}
     ${accents}
+    ${visualComplexity}
     Visual Logic: Components integrated into a custom chassis. 
     Industrial top-down flatlay, cinematic lighting, 1:1 Aspect.
   `;
