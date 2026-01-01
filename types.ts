@@ -1,15 +1,4 @@
-
-export type PartCategory = 
-  | 'Core' 
-  | 'Display' 
-  | 'Sensor' 
-  | 'Power' 
-  | 'Input' 
-  | 'Actuator' 
-  | 'Light' 
-  | 'Structure' 
-  | 'Comm' 
-  | 'Passive';
+export type PartCategory = string;
 
 export type StructureMaterial = 'Brass' | 'Acrylic' | 'Plywood' | '3D Print';
 export type Difficulty = 'Easy' | 'Moderate' | 'Hard';
@@ -20,6 +9,8 @@ export interface Part {
   id: string;
   name: string;
   category: PartCategory;
+  link?: string;
+  description?: string;
   details?: {
     photoUrl?: string;
   };

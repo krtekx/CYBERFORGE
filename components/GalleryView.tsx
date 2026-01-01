@@ -1,14 +1,21 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { analyzeImageWithAI, BlueprintMetadata } from '../services/metadataService';
 
 interface GalleryImage {
     name: string;
     path: string;
 }
 
-export const GalleryView = () => {
+interface GalleryViewProps {
+    onClone?: (metadata: BlueprintMetadata) => void;
+}
+
+export const GalleryView: React.FC<GalleryViewProps> = ({ onClone }) => {
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
     const [loading, setLoading] = useState(true);
+    const [analyzing, setAnalyzing] = useState(false);
+    const [analyzingImage, setAnalyzingImage] = useState<string | null>(null);
 
     useEffect(() => {
         // Load all WebP images from the gallery folder
@@ -25,8 +32,30 @@ export const GalleryView = () => {
                     };
                 });
 
-                // Sort by name
-                loadedImages.sort((a, b) => a.name.localeCompare(b.name));
+                // Sort by timestamp in filename (newest first)
+                // Files with format: cyberforge_name_timestamp.webp or name_timestamp.webp
+                loadedImages.sort((a, b) => {
+                    // Extract timestamp from filename (last number sequence before .webp)
+                    const getTimestamp = (name: string): number => {
+                        const match = name.match(/(\d{13,})/); // Match 13+ digit timestamps
+                        return match ? parseInt(match[1]) : 0;
+                    };
+
+                    const timestampA = getTimestamp(a.name);
+                    const timestampB = getTimestamp(b.name);
+
+                    // If both have timestamps, sort by timestamp (newest first)
+                    if (timestampA && timestampB) {
+                        return timestampB - timestampA;
+                    }
+
+                    // Files without timestamps go to the end
+                    if (timestampA && !timestampB) return -1;
+                    if (!timestampA && timestampB) return 1;
+
+                    // If neither has timestamp, sort alphabetically
+                    return a.name.localeCompare(b.name);
+                });
 
                 setImages(loadedImages);
                 setLoading(false);
@@ -38,6 +67,49 @@ export const GalleryView = () => {
 
         loadImages();
     }, []);
+
+    const handleClone = async (img: GalleryImage, e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        if (!onClone) {
+            alert('Clone functionality not available in this view');
+            return;
+        }
+
+        setAnalyzing(true);
+        setAnalyzingImage(img.path);
+
+        try {
+            // Convert image to base64
+            const response = await fetch(img.path);
+            const blob = await response.blob();
+            const reader = new FileReader();
+
+            reader.onloadend = async () => {
+                const base64 = reader.result as string;
+
+                // Analyze image with AI
+                const metadata = await analyzeImageWithAI(base64);
+
+                if (metadata) {
+                    onClone(metadata);
+                    alert(`✅ CLONE INITIATED\n\nDesign: ${metadata.name}\nDifficulty: ${metadata.difficulty}\nComponents: ${metadata.bom.length}\n\nReturning to FORGE...`);
+                } else {
+                    alert('❌ CLONE FAILED\n\nCould not analyze blueprint. Please try again or check API key.');
+                }
+
+                setAnalyzing(false);
+                setAnalyzingImage(null);
+            };
+
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            console.error('Clone failed:', error);
+            alert('❌ CLONE ERROR\n\nFailed to process image. Check console for details.');
+            setAnalyzing(false);
+            setAnalyzingImage(null);
+        }
+    };
 
     if (loading) {
         return (
@@ -77,16 +149,40 @@ export const GalleryView = () => {
                         {images.map((img, index) => (
                             <div
                                 key={index}
-                                className="group relative bg-[#0a0a0f] border border-white/5 p-3 hover:border-[#ff00ff] transition-all cursor-pointer flex flex-col"
-                                onClick={() => setSelectedImage(img)}
+                                className="group relative bg-[#0a0a0f] border border-white/5 p-3 hover:border-[#ff00ff] transition-all flex flex-col"
                             >
-                                <div className="aspect-square bg-black overflow-hidden relative shadow-inner">
+                                <div
+                                    className="aspect-square bg-black overflow-hidden relative shadow-inner cursor-pointer"
+                                    onClick={() => setSelectedImage(img)}
+                                >
                                     <img
                                         src={img.path}
                                         alt={img.name}
                                         className="w-full h-full object-cover transition-transform group-hover:scale-110"
                                         loading="lazy"
                                     />
+
+                                    {/* Clone button overlay */}
+                                    <button
+                                        onClick={(e) => handleClone(img, e)}
+                                        disabled={analyzing}
+                                        className="absolute top-2 right-2 px-3 py-1.5 bg-[#00f3ff] text-black text-[9px] font-black uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                        title="Clone this design"
+                                    >
+                                        {analyzingImage === img.path ? (
+                                            <>
+                                                <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                                                ANALYZING
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                                CLONE
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
                                 <div className="mt-4 text-[11px] font-black uppercase truncate text-gray-400 group-hover:text-[#ff00ff]">
                                     {img.name}
@@ -121,21 +217,36 @@ export const GalleryView = () => {
                                 onClick={(e) => e.stopPropagation()}
                             />
                         </div>
-                        <div className="text-center">
+                        <div className="text-center flex flex-col gap-4">
                             <h3 className="text-2xl font-black text-white uppercase tracking-wider">
                                 {selectedImage.name}
                             </h3>
-                            <a
-                                href={selectedImage.path}
-                                download={`${selectedImage.name}.webp`}
-                                className="inline-block mt-4 px-6 py-3 bg-[#ff00ff] text-white text-xs font-black uppercase tracking-wider hover:bg-white hover:text-black transition-all"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                                DOWNLOAD
-                            </a>
+                            <div className="flex gap-4 justify-center">
+                                <a
+                                    href={selectedImage.path}
+                                    download={`${selectedImage.name}.webp`}
+                                    className="inline-block px-6 py-3 bg-[#ff00ff] text-white text-xs font-black uppercase tracking-wider hover:bg-white hover:text-black transition-all"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    DOWNLOAD
+                                </a>
+                                <button
+                                    onClick={(e) => {
+                                        setSelectedImage(null);
+                                        handleClone(selectedImage, e);
+                                    }}
+                                    disabled={analyzing}
+                                    className="px-6 py-3 bg-[#00f3ff] text-black text-xs font-black uppercase tracking-wider hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    CLONE DESIGN
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

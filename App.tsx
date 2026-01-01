@@ -1,13 +1,16 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { Part, MachineDesign, AppStatus, MachineConfig, StructureMaterial, BOMItem, Difficulty, BatteryType } from './types';
+import { Part, MachineDesign, AppStatus, MachineConfig, StructureMaterial, BOMItem, Difficulty, BatteryType, PartCategory } from './types';
 import PartSelector from './components/PartSelector';
 import PartDetailPopup from './components/PartDetailPopup';
 import SynthesisProgress from './components/SynthesisProgress';
 import ApiKeyManagerComponent from './components/ApiKeyManager';
 import { LoginScreen } from './components/LoginScreen';
 import { GalleryView } from './components/GalleryView';
+import { ComponentsView } from './components/ComponentsView';
 import { generateDesigns, generateImageForDesign } from './services/geminiService';
 import { ApiKeyManager } from './services/apiKeyManager';
+import { saveMetadataFile } from './services/metadataService';
+import { StorageService } from './services/storageService';
 import { COMMON_PARTS } from './constants';
 
 const VERSION = "v13.6.0";
@@ -176,8 +179,9 @@ const BOMRow: React.FC<{ item: BOMItem, onInspect: (n: string) => void }> = ({ i
 );
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'forge' | 'gallery'>('forge');
-  const [availableParts, setAvailableParts] = useState<Part[]>(COMMON_PARTS);
+  const [view, setView] = useState<'forge' | 'gallery' | 'components'>('forge');
+  const [availableParts, setAvailableParts] = useState<Part[]>(() => StorageService.getParts());
+  const [categories, setCategories] = useState<PartCategory[]>(() => StorageService.getCategories());
   const [selectedParts, setSelectedParts] = useState<Part[]>([]);
   const [config, setConfig] = useState<MachineConfig>({
     useBattery: true,
@@ -357,6 +361,43 @@ const App: React.FC = () => {
     setIsAuthenticated(true);
   };
 
+  const handleClone = (metadata: import('./services/metadataService').BlueprintMetadata) => {
+    // Switch to forge view
+    setView('forge');
+
+    // Update config with cloned design parameters
+    setConfig(prev => ({
+      ...prev,
+      difficulty: (metadata.difficulty as any) || 'Moderate',
+      structureMaterial: (metadata.material as any) || 'Brass',
+      userPrompt: `${metadata.name}: ${metadata.description}`,
+      synthesisCount: 1
+    }));
+
+    // Try to match parts from BOM
+    const matchedParts: Part[] = [];
+    metadata.bom.forEach(bomItem => {
+      const partName = bomItem.part.toLowerCase();
+      const found = availableParts.find(p =>
+        p.name.toLowerCase().includes(partName) ||
+        partName.includes(p.name.toLowerCase())
+      );
+      if (found) {
+        matchedParts.push(found);
+      }
+    });
+
+    setSelectedParts(matchedParts);
+
+    console.log('🔄 CLONE COMPLETE:', {
+      name: metadata.name,
+      difficulty: metadata.difficulty,
+      material: metadata.material,
+      bomItems: metadata.bom.length,
+      matchedParts: matchedParts.length
+    });
+  };
+
   const activeDesign = activeDesignIndex >= 0 ? designs[activeDesignIndex] : null;
 
   // Show login screen if not authenticated
@@ -394,6 +435,7 @@ const App: React.FC = () => {
           <div className="flex bg-black border border-gray-900 p-1 rounded-sm h-10">
             <button onClick={() => setView('forge')} className={`px-5 text-[10px] font-black uppercase transition-all ${view === 'forge' ? 'bg-[#00f3ff] text-black' : 'text-gray-600 hover:text-white'}`}>FORGE</button>
             <button onClick={() => setView('gallery')} className={`px-5 text-[10px] font-black uppercase transition-all ${view === 'gallery' ? 'bg-[#ff00ff] text-white' : 'text-gray-600 hover:text-white'}`}>GALLERY</button>
+            <button onClick={() => setView('components')} className={`px-5 text-[10px] font-black uppercase transition-all ${view === 'components' ? 'bg-white text-black' : 'text-gray-600 hover:text-white'}`}>COMPONENTS</button>
           </div>
         </div>
 
@@ -591,8 +633,51 @@ const App: React.FC = () => {
               </main>
             )}
           </>
+        ) : view === 'gallery' ? (
+          <GalleryView onClone={handleClone} />
         ) : (
-          <GalleryView />
+          <ComponentsView
+            parts={availableParts}
+            categories={categories}
+            onAddPart={(p) => {
+              const updated = [...availableParts, p];
+              setAvailableParts(updated);
+              StorageService.saveParts(updated);
+            }}
+            onRemovePart={(id) => {
+              const updated = availableParts.filter(p => p.id !== id);
+              setAvailableParts(updated);
+              StorageService.saveParts(updated);
+            }}
+            onUpdatePart={(updatedPart) => {
+              const updated = availableParts.map(p => p.id === updatedPart.id ? updatedPart : p);
+              setAvailableParts(updated);
+              StorageService.saveParts(updated);
+            }}
+            onAddCategory={(cat) => {
+              const updated = [...categories, cat];
+              setCategories(updated);
+              StorageService.saveCategories(updated);
+            }}
+            onRemoveCategory={(cat) => {
+              const updated = categories.filter(c => c !== cat);
+              setCategories(updated);
+              StorageService.saveCategories(updated);
+              // Move deleted category items to Passive
+              const partsUpdated = availableParts.map(p => p.category === cat ? { ...p, category: 'Passive' } : p);
+              setAvailableParts(partsUpdated);
+              StorageService.saveParts(partsUpdated);
+            }}
+            onUpdateCategory={(oldCat, newCat) => {
+              const updated = categories.map(c => c === oldCat ? newCat : c);
+              setCategories(updated);
+              StorageService.saveCategories(updated);
+              // Update parts with old category
+              const partsUpdated = availableParts.map(p => p.category === oldCat ? { ...p, category: newCat } : p);
+              setAvailableParts(partsUpdated);
+              StorageService.saveParts(partsUpdated);
+            }}
+          />
         )}
       </main>
 

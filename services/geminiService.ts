@@ -236,6 +236,71 @@ export const generateImageForDesign = async (
   });
 };
 
+export const generateCategoryIcon = async (category: string): Promise<string | undefined> => {
+  return executeWithRetry(async () => {
+    const apiKey = ApiKeyManager.getActiveKey();
+    if (!apiKey) throw new Error("No API key");
+
+    const ai = new GoogleGenAI({ apiKey });
+    const prompt = `
+      Design a simple, high-contrast monochrome icon for the electronics category: "${category}".
+      Style: Cyberpunk UI, futuristic, neon blue/white lines.
+      Format: Icon, centered, transparent background if possible, or black background.
+      The image should look like a game inventory icon.
+      Aspect Ratio: 1:1.
+    `;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image', // Assuming this model supports image gen, or fall back to 'imagen-3.0-generate-001' if available?
+        // Actually, gemini-2.5-flash might NOT support image generation OUTPUT.
+        // It supports image INPUT.
+        // I need to check if we were using a specific model for images.
+        // generateImageForDesign used 'gemini-2.5-flash-image' in my code:
+        //    model: 'gemini-2.5-flash-image',
+        // So I assume this is the configured model for images in this project context.
+        contents: { parts: [{ text: prompt }] }
+      });
+
+      for (const candidate of response.candidates) {
+        for (const part of candidate.content.parts) {
+          if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        }
+      }
+    } catch (err) {
+      console.error("Icon gen failed:", err);
+      // Fallback: Generate SVG code using text model
+      return generateSVGIcon(category);
+    }
+    return undefined;
+  }, 2, 2000);
+};
+
+const generateSVGIcon = async (category: string): Promise<string | undefined> => {
+  const apiKey = ApiKeyManager.getActiveKey();
+  if (!apiKey) return undefined;
+  const ai = new GoogleGenAI({ apiKey });
+
+  const prompt = `
+     Generate valid SVG code for a simple icon representing "${category}".
+     Size: 64x64. Color: #00f3ff. Background: none/transparent.
+     Style: Cyberpunk, tech, circuit lines.
+     Return ONLY the <svg>...</svg> code string. No markdown block.
+   `;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt
+  });
+
+  let svg = response.text || '';
+  svg = svg.replace(/```xml/g, '').replace(/```svg/g, '').replace(/```/g, '').trim();
+  if (svg.startsWith('<svg')) {
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
+  }
+  return undefined;
+};
+
 export const generatePartDocumentation = async (partName: string): Promise<string | undefined> => {
   const apiKey = ApiKeyManager.getActiveKey();
   if (!apiKey) return undefined;
@@ -292,6 +357,56 @@ export const generateRealPartAbstract = async (partName: string): Promise<{ abst
     }, 2, 1500);
   } catch (e) {
     console.error("Part abstract generation failed:", e);
+    return null;
+  }
+};
+
+export const analyzeProductLink = async (url: string): Promise<{ name: string; category: string; description: string; imageUrl?: string } | null> => {
+  const apiKey = ApiKeyManager.getActiveKey();
+  if (!apiKey) return null;
+
+  try {
+    return await executeWithRetry(async () => {
+      const ai = new GoogleGenAI({ apiKey });
+      const prompt = `
+        Analyze this product link/URL and infer the likely component details.
+        URL: "${url}"
+        
+        If it's a known electronics part, provide its standard specific name (e.g. "Arduino Uno R3", "ESP32-WROOM", "MPU-6050", "NEMA 17 Stepper").
+        Infer the Category from this list: 'Core', 'Display', 'Sensor', 'Power', 'Input', 'Actuator', 'Light', 'Structure', 'Comm', 'Passive'. If unsure, use 'Passive'.
+        Write a short technical description (max 1 sentence).
+        
+        Return JSON format: { "name": string, "category": string, "description": string }
+      `;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              category: { type: Type.STRING },
+              description: { type: Type.STRING }
+            },
+            required: ["name", "category", "description"]
+          }
+        }
+      });
+
+      const text = response.text;
+      if (text) {
+        const data = JSON.parse(cleanJsonResponse(text));
+        // Simple heuristic for image: use a high-quality placeholder service with the specific name
+        const imageUrl = `https://loremflickr.com/400/400/electronics,${encodeURIComponent(data.name.replace(/ /g, ','))}`;
+        return { ...data, imageUrl };
+      }
+      return null;
+    }, 2, 2000);
+  } catch (e) {
+    console.error("Link analysis failed:", e);
     return null;
   }
 };
