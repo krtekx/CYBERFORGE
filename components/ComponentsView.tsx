@@ -69,9 +69,9 @@ export const ComponentsView: React.FC<ComponentsViewProps> = ({
             } else {
                 alert("NEURAL SCAN FAILED: Could not infer data. Please fill manually.");
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert("CONNECTION ERROR during scan.");
+            alert(`CONNECTION ERROR during scan: ${e.message || 'Unknown Error'}`);
         } finally {
             setIsScanning(false);
         }
@@ -243,7 +243,7 @@ export const ComponentsView: React.FC<ComponentsViewProps> = ({
             {/* Add/Edit Modal */}
             {isModalOpen && createPortal(
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-start justify-center pt-24 p-4">
-                    <div className="w-full max-w-lg bg-[#0a0a0f] border border-[#00f3ff] p-1 relative shadow-[0_0_50px_#00f3ff22] animate-in fade-in zoom-in duration-200">
+                    <div className="w-full max-w-lg bg-[#0a0a0f] border border-[#00f3ff] p-1 relative shadow-[0_0_50px_#00f3ff22] animate-in fade-in zoom-in duration-200 max-h-[85vh] overflow-y-auto custom-scrollbar">
                         {/* Corner decorations */}
                         <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-[#00f3ff]"></div>
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-[#00f3ff]"></div>
@@ -351,7 +351,7 @@ export const ComponentsView: React.FC<ComponentsViewProps> = ({
             {/* Category Manager Modal */}
             {isCatManOpen && createPortal(
                 <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[110] flex items-start justify-center pt-24 p-4">
-                    <div className="w-full max-w-md bg-[#0a0a0f] border border-gray-700 p-8 space-y-6 shadow-2xl">
+                    <div className="w-full max-w-md bg-[#0a0a0f] border border-gray-700 p-8 space-y-6 shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar">
                         <div className="flex justify-between items-center">
                             <h3 className="text-lg font-black text-white uppercase tracking-widest">Category_Protocols</h3>
                             <button onClick={() => setIsCatManOpen(false)} className="text-gray-500 hover:text-white">✕</button>

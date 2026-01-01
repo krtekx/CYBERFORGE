@@ -44,7 +44,7 @@ const PartDetailPopup: React.FC<PartDetailPopupProps> = ({ part, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[300] flex items-start justify-center pt-24 p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-300">
-      <div className="relative w-full max-w-5xl bg-[#050505] border border-[#00f3ff44] shadow-[0_0_100px_rgba(0,243,255,0.1)] overflow-hidden flex flex-col md:flex-row h-[90vh] md:h-auto max-h-[90vh]">
+      <div className="relative w-full max-w-5xl bg-[#050505] border border-[#00f3ff44] shadow-[0_0_100px_rgba(0,243,255,0.1)] overflow-hidden flex flex-col md:flex-row h-auto max-h-[85vh]">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#00f3ff] via-[#ff00ff] to-[#00f3ff] animate-pulse"></div>
 
         <button

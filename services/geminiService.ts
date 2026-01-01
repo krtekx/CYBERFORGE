@@ -409,6 +409,6 @@ export const analyzeProductLink = async (url: string): Promise<{ name: string; c
     }, 2, 2000);
   } catch (e) {
     console.error("Link analysis failed:", e);
-    return null;
+    throw e;
   }
 };
