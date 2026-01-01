@@ -405,6 +405,9 @@ const App: React.FC = () => {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
+  const galleryModules = import.meta.glob('/public/gallery/*.webp', { eager: true });
+  const galleryCount = Object.keys(galleryModules).length;
+
   return (
     <div className="min-h-screen bg-[#050505] text-gray-300 flex flex-col overflow-x-hidden selection:bg-[#00f3ff] selection:text-black font-mono">
 
@@ -434,7 +437,7 @@ const App: React.FC = () => {
 
           <div className="flex bg-black border border-gray-900 p-1 rounded-sm h-10">
             <button onClick={() => setView('forge')} className={`px-5 text-[10px] font-black uppercase transition-all ${view === 'forge' ? 'bg-[#00f3ff] text-black' : 'text-gray-600 hover:text-white'}`}>FORGE</button>
-            <button onClick={() => setView('gallery')} className={`px-5 text-[10px] font-black uppercase transition-all ${view === 'gallery' ? 'bg-[#ff00ff] text-white' : 'text-gray-600 hover:text-white'}`}>GALLERY</button>
+            <button onClick={() => setView('gallery')} className={`px-5 text-[10px] font-black uppercase transition-all ${view === 'gallery' ? 'bg-[#ff00ff] text-white' : 'text-gray-600 hover:text-white'}`}>GALLERY ({galleryCount})</button>
             <button onClick={() => setView('components')} className={`px-5 text-[10px] font-black uppercase transition-all ${view === 'components' ? 'bg-white text-black' : 'text-gray-600 hover:text-white'}`}>COMPONENTS</button>
           </div>
         </div>
