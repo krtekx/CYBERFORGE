@@ -9,6 +9,18 @@ const cleanJsonResponse = (text: string) => {
 };
 
 /**
+ * Helper: Extract base64 image from Gemini response
+ */
+const extractInlineImage = (response: any): string | undefined => {
+  for (const candidate of response.candidates || []) {
+    for (const part of candidate.content?.parts || []) {
+      if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+    }
+  }
+  return undefined;
+};
+
+/**
  * Sleep utility for delays
  */
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -217,22 +229,29 @@ export const generateImageForDesign = async (
   `;
 
     try {
+      // Try Imagen 3 first
       const response = await ai.models.generateContent({
         model: 'imagen-3.0-generate-001',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
-
-      for (const candidate of response.candidates || []) {
-        for (const part of candidate.content?.parts || []) {
-          if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        }
-      }
+      const img = extractInlineImage(response);
+      if (img) return img;
     } catch (err) {
-      console.error("Image generation failed:", err);
-      throw err; // Re-throw to trigger retry logic
+      console.warn("Imagen 3 generation failed, falling back to Gemini 2.5 Flash:", err);
     }
-    return undefined;
+
+    // Fallback or if first attempt yielded no image (though catch handles errors)
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [{ text: prompt }] }
+      });
+      return extractInlineImage(response);
+    } catch (err) {
+      console.error("Fallback image generation failed:", err);
+      throw err;
+    }
   }, 2, 2000).catch(err => {
     console.error("Image generation failed after retries:", err);
     return undefined; // Return undefined instead of throwing for images
@@ -254,23 +273,32 @@ export const generateCategoryIcon = async (category: string): Promise<string | u
     `;
 
     try {
+      // Try Imagen 3
       const response = await ai.models.generateContent({
         model: 'imagen-3.0-generate-001',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
-
-      for (const candidate of response.candidates || []) {
-        for (const part of candidate.content?.parts || []) {
-          if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        }
-      }
+      const img = extractInlineImage(response);
+      if (img) return img;
     } catch (err) {
-      console.error("Icon gen failed:", err);
-      // Fallback: Generate SVG code using text model
-      return generateSVGIcon(category);
+      console.warn("Imagen 3 icon generation failed, falling back to Gemini 2.5 Flash:", err);
     }
-    return undefined;
+
+    try {
+      // Fallback: Gemini 2.5 Flash
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [{ text: prompt }] }
+      });
+      const img = extractInlineImage(response);
+      if (img) return img;
+    } catch (err) {
+      console.warn("Flash icon gen failed, falling back to SVG:", err);
+    }
+
+    // Fallback: SVG
+    return generateSVGIcon(category);
   }, 2, 2000);
 };
 
@@ -308,18 +336,26 @@ export const generatePartDocumentation = async (partName: string): Promise<strin
       const ai = new GoogleGenAI({ apiKey });
       const prompt = `Detailed technical line art blueprint of ${partName}. Schematic lines only, dark grid background.`;
 
+      try {
+        // Try Imagen 3
+        const response = await ai.models.generateContent({
+          model: 'imagen-3.0-generate-001',
+          contents: { parts: [{ text: prompt }] },
+          config: { imageConfig: { aspectRatio: "1:1" } }
+        });
+        const img = extractInlineImage(response);
+        if (img) return img;
+      } catch (err) {
+        console.warn("Imagen 3 documentation generation failed, falling back to Gemini 2.5 Flash:", err);
+      }
+
+      // Fallback
       const response = await ai.models.generateContent({
-        model: 'imagen-3.0-generate-001',
+        model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
-
-      for (const candidate of response.candidates || []) {
-        for (const part of candidate.content?.parts || []) {
-          if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        }
-      }
-      return undefined;
+      return extractInlineImage(response);
     }, 2, 1500);
   } catch (err) {
     console.error("Part documentation generation failed:", err);
