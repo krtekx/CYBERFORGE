@@ -216,12 +216,12 @@ export const generateImageForDesign = async (
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'nano-banana-pro',
         contents: { parts: [{ text: prompt }] }
       });
 
-      for (const candidate of response.candidates) {
-        for (const part of candidate.content.parts) {
+      for (const candidate of response.candidates || []) {
+        for (const part of candidate.content?.parts || []) {
           if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         }
       }
@@ -252,18 +252,12 @@ export const generateCategoryIcon = async (category: string): Promise<string | u
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image', // Assuming this model supports image gen, or fall back to 'imagen-3.0-generate-001' if available?
-        // Actually, gemini-2.5-flash might NOT support image generation OUTPUT.
-        // It supports image INPUT.
-        // I need to check if we were using a specific model for images.
-        // generateImageForDesign used 'gemini-2.5-flash-image' in my code:
-        //    model: 'gemini-2.5-flash-image',
-        // So I assume this is the configured model for images in this project context.
+        model: 'nano-banana-pro',
         contents: { parts: [{ text: prompt }] }
       });
 
-      for (const candidate of response.candidates) {
-        for (const part of candidate.content.parts) {
+      for (const candidate of response.candidates || []) {
+        for (const part of candidate.content?.parts || []) {
           if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         }
       }
@@ -311,13 +305,13 @@ export const generatePartDocumentation = async (partName: string): Promise<strin
       const prompt = `Detailed technical line art blueprint of ${partName}. Schematic lines only, dark grid background.`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'nano-banana-pro',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
 
-      for (const candidate of response.candidates) {
-        for (const part of candidate.content.parts) {
+      for (const candidate of response.candidates || []) {
+        for (const part of candidate.content?.parts || []) {
           if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         }
       }
