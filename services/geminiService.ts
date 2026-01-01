@@ -2,7 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MachineDesign, Part, MachineConfig, BOMItem } from "../types";
 import { ApiKeyManager } from "./apiKeyManager";
 
-export const CURRENT_IMAGE_MODEL = "nano-banana-pro";
+export const CURRENT_IMAGE_MODEL = "gemini-2.5-flash-image";
 
 const cleanJsonResponse = (text: string) => {
   return text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -218,7 +218,7 @@ export const generateImageForDesign = async (
 
     try {
       const response = await ai.models.generateContent({
-        model: 'nano-banana-pro',
+        model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: prompt }] }
       });
 
@@ -254,7 +254,7 @@ export const generateCategoryIcon = async (category: string): Promise<string | u
 
     try {
       const response = await ai.models.generateContent({
-        model: 'nano-banana-pro',
+        model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: prompt }] }
       });
 
@@ -307,7 +307,7 @@ export const generatePartDocumentation = async (partName: string): Promise<strin
       const prompt = `Detailed technical line art blueprint of ${partName}. Schematic lines only, dark grid background.`;
 
       const response = await ai.models.generateContent({
-        model: 'nano-banana-pro',
+        model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
