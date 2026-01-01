@@ -5,6 +5,7 @@ import PartDetailPopup from './components/PartDetailPopup';
 import SynthesisProgress from './components/SynthesisProgress';
 import ApiKeyManagerComponent from './components/ApiKeyManager';
 import { LoginScreen } from './components/LoginScreen';
+import { GalleryView } from './components/GalleryView';
 import { generateDesigns, generateImageForDesign } from './services/geminiService';
 import { ApiKeyManager } from './services/apiKeyManager';
 import { COMMON_PARTS } from './constants';
@@ -591,21 +592,7 @@ const App: React.FC = () => {
             )}
           </>
         ) : (
-          <section className="animate-reveal space-y-12 pb-40">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-[#ff00ff33] pb-12">
-              <h2 className="text-7xl font-black text-white cyber-font italic uppercase tracking-tighter leading-none">ARCHIVE</h2>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8">
-              {designs.slice().reverse().map((d) => (
-                <div key={`arch-${d.id}`} className="group relative bg-[#0a0a0f] border border-white/5 p-3 hover:border-[#00f3ff] transition-all cursor-pointer flex flex-col" onClick={() => { setActiveDesignIndex(designs.indexOf(d)); setView('forge'); }}>
-                  <div className="aspect-square bg-black overflow-hidden relative shadow-inner">
-                    {d.images[0] ? <img src={d.images[0]} className="w-full h-full object-cover transition-transform group-hover:scale-110" /> : <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-800 uppercase font-mono animate-pulse">Sync</div>}
-                  </div>
-                  <div className="mt-4 text-[11px] font-black uppercase truncate text-gray-400 group-hover:text-[#00f3ff]">{d.name}</div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <GalleryView />
         )}
       </main>
 
