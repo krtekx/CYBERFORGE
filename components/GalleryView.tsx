@@ -49,12 +49,13 @@ export const GalleryView: React.FC<GalleryViewProps> = ({ onClone }) => {
                         return timestampB - timestampA;
                     }
 
-                    // Files without timestamps go to the end
-                    if (timestampA && !timestampB) return -1;
-                    if (!timestampA && timestampB) return 1;
+                    // Files without timestamps (likely manual uploads) go to the TOP
+                    if (timestampA && !timestampB) return 1; // A(ts) should be after B(no-ts)
+                    if (!timestampA && timestampB) return -1; // A(no-ts) should be before B(ts)
 
-                    // If neither has timestamp, sort alphabetically
-                    return a.name.localeCompare(b.name);
+                    // If neither has timestamp, sort alphabetically DESCENDING (Smart Numeric)
+                    // e.g. "download (48)" comes before "download (1)"
+                    return b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: 'base' });
                 });
 
                 setImages(loadedImages);
