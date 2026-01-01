@@ -7,7 +7,7 @@ import ApiKeyManagerComponent from './components/ApiKeyManager';
 import { LoginScreen } from './components/LoginScreen';
 import { GalleryView } from './components/GalleryView';
 import { ComponentsView } from './components/ComponentsView';
-import { generateDesigns, generateImageForDesign } from './services/geminiService';
+import { generateDesigns, generateImageForDesign, CURRENT_IMAGE_MODEL } from './services/geminiService';
 import { ApiKeyManager } from './services/apiKeyManager';
 import { saveMetadataFile } from './services/metadataService';
 import { StorageService } from './services/storageService';
@@ -416,6 +416,7 @@ const App: React.FC = () => {
           <h1 className="cyber-font text-4xl font-black text-white glitch-text italic tracking-tighter leading-none">CYBERFORGE</h1>
           <div className="flex flex-col">
             <span className="text-[10px] font-mono text-[#00f3ff] bg-[#00f3ff11] px-2 py-0.5 border border-[#00f3ff22]">{VERSION}</span>
+            <span className="text-[10px] font-mono text-[#00f3ff] bg-[#00f3ff11] px-2 py-0.5 border border-[#00f3ff22] ml-2">{CURRENT_IMAGE_MODEL.toUpperCase()}</span>
           </div>
         </div>
         <div className="flex items-center gap-6">

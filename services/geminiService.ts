@@ -2,6 +2,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MachineDesign, Part, MachineConfig, BOMItem } from "../types";
 import { ApiKeyManager } from "./apiKeyManager";
 
+export const CURRENT_IMAGE_MODEL = "nano-banana-pro";
+
 const cleanJsonResponse = (text: string) => {
   return text.replace(/```json/g, "").replace(/```/g, "").trim();
 };
