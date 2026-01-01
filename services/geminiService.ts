@@ -2,7 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MachineDesign, Part, MachineConfig, BOMItem } from "../types";
 import { ApiKeyManager } from "./apiKeyManager";
 
-export const CURRENT_IMAGE_MODEL = "gemini-3.0-flash-image";
+export const CURRENT_IMAGE_MODEL = "gemini-3.0-pro-image";
 
 const cleanJsonResponse = (text: string) => {
   return text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -231,7 +231,7 @@ export const generateImageForDesign = async (
     try {
       // Try Gemini 3.0 Pro / Flash first
       const response = await ai.models.generateContent({
-        model: 'gemini-3.0-flash-image',
+        model: 'gemini-3.0-pro-image',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
@@ -275,7 +275,7 @@ export const generateCategoryIcon = async (category: string): Promise<string | u
     try {
       // Try Gemini 3
       const response = await ai.models.generateContent({
-        model: 'gemini-3.0-flash-image',
+        model: 'gemini-3.0-pro-image',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
@@ -339,7 +339,7 @@ export const generatePartDocumentation = async (partName: string): Promise<strin
       try {
         // Try Gemini 3
         const response = await ai.models.generateContent({
-          model: 'gemini-3.0-flash-image',
+          model: 'gemini-3.0-pro-image',
           contents: { parts: [{ text: prompt }] },
           config: { imageConfig: { aspectRatio: "1:1" } }
         });
