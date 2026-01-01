@@ -22,13 +22,13 @@ export const GalleryView: React.FC<GalleryViewProps> = ({ onClone }) => {
         const loadImages = async () => {
             try {
                 // Use Vite's import.meta.glob to load all webp files
-                const imageModules = import.meta.glob('/gallery/*.webp', { eager: true, as: 'url' });
+                const imageModules = import.meta.glob('/public/gallery/*.webp', { eager: true, as: 'url' });
 
                 const loadedImages: GalleryImage[] = Object.entries(imageModules).map(([path, url]) => {
                     const fileName = path.split('/').pop() || '';
                     return {
                         name: fileName.replace('.webp', '').replace(/_/g, ' '),
-                        path: url as string
+                        path: (url as string).replace('/public', '')
                     };
                 });
 
