@@ -503,6 +503,7 @@ const App: React.FC = () => {
             <section className={`bg-black/40 border border-[#00f3ff11] transition-opacity duration-500 ${status === AppStatus.GENERATING ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
               <PartSelector
                 availableParts={availableParts} selectedParts={selectedParts}
+                categories={categories}
                 onAddPart={(p) => setSelectedParts(prev => [...prev, p])}
                 onRegisterPart={(p) => setAvailableParts(prev => [...prev, p])}
                 onRemovePart={(id) => setSelectedParts(prev => prev.filter(p => p.id !== id))}

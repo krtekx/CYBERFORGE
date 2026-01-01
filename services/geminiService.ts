@@ -311,7 +311,7 @@ export const generatePartDocumentation = async (partName: string): Promise<strin
       const prompt = `Detailed technical line art blueprint of ${partName}. Schematic lines only, dark grid background.`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
@@ -372,11 +372,14 @@ export const analyzeProductLink = async (url: string): Promise<{ name: string; c
         Analyze this product link/URL and infer the likely component details.
         URL: "${url}"
         
-        If it's a known electronics part, provide its standard specific name (e.g. "Arduino Uno R3", "ESP32-WROOM", "MPU-6050", "NEMA 17 Stepper").
+        If it's a known electronics part, provide its standard specific name (e.g. "Arduino Uno R3", "ESP32-WROOM").
         Infer the Category from this list: 'Core', 'Display', 'Sensor', 'Power', 'Input', 'Actuator', 'Light', 'Structure', 'Comm', 'Passive'. If unsure, use 'Passive'.
         Write a short technical description (max 1 sentence).
         
-        Return JSON format: { "name": string, "category": string, "description": string }
+        For "imageUrl": Try to find a direct, valid HTTP URL to a product image (e.g. from wikimedia, adafruit, sparkfun, or generic CDN) if it is a standard part. 
+        DO NOT invent a URL. If you cannot confidently predict a static image URL, return an empty string.
+        
+        Return JSON format: { "name": string, "category": string, "description": string, "imageUrl": string }
       `;
 
       const response = await ai.models.generateContent({
@@ -389,7 +392,8 @@ export const analyzeProductLink = async (url: string): Promise<{ name: string; c
             properties: {
               name: { type: Type.STRING },
               category: { type: Type.STRING },
-              description: { type: Type.STRING }
+              description: { type: Type.STRING },
+              imageUrl: { type: Type.STRING }
             },
             required: ["name", "category", "description"]
           }
@@ -399,9 +403,7 @@ export const analyzeProductLink = async (url: string): Promise<{ name: string; c
       const text = response.text;
       if (text) {
         const data = JSON.parse(cleanJsonResponse(text));
-        // Simple heuristic for image: use a high-quality placeholder service with the specific name
-        const imageUrl = `https://loremflickr.com/400/400/electronics,${encodeURIComponent(data.name.replace(/ /g, ','))}`;
-        return { ...data, imageUrl };
+        return data;
       }
       return null;
     }, 2, 2000);

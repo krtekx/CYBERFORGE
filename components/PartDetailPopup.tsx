@@ -23,10 +23,10 @@ const PartDetailPopup: React.FC<PartDetailPopupProps> = ({ part, onClose }) => {
           generatePartDocumentation(part.name),
           generateRealPartAbstract(part.name)
         ]);
-        
+
         if (img) setDocImage(img);
         if (info) setRealInfo(info);
-        
+
         if (!img && !info) setHasFailed(true);
       } catch (err) {
         setHasFailed(true);
@@ -37,17 +37,17 @@ const PartDetailPopup: React.FC<PartDetailPopupProps> = ({ part, onClose }) => {
     fetchDoc();
   }, [part]);
 
-  const fallbackUrl = `https://loremflickr.com/800/600/electronics,circuit,${encodeURIComponent(part.name)}`;
-  
+  const fallbackUrl = ''; // User requested no loremflickr
+
   const aliexpressLink = `https://www.aliexpress.com/w/wholesale-${encodeURIComponent(part.name)}.html`;
   const amazonLink = `https://www.amazon.com/s?k=${encodeURIComponent(part.name)}`;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[300] flex items-start justify-center pt-24 p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-300">
       <div className="relative w-full max-w-5xl bg-[#050505] border border-[#00f3ff44] shadow-[0_0_100px_rgba(0,243,255,0.1)] overflow-hidden flex flex-col md:flex-row h-[90vh] md:h-auto max-h-[90vh]">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#00f3ff] via-[#ff00ff] to-[#00f3ff] animate-pulse"></div>
-        
-        <button 
+
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 z-50 text-[#00f3ff] hover:text-white transition-all p-3 bg-black/50 border border-[#00f3ff22] hover:border-[#00f3ff]"
         >
@@ -58,7 +58,7 @@ const PartDetailPopup: React.FC<PartDetailPopupProps> = ({ part, onClose }) => {
 
         <div className="w-full md:w-1/2 bg-[#020202] flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-[#00f3ff22] min-h-[400px] p-10 relative">
           <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#00f3ff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-          
+
           {loading ? (
             <div className="flex flex-col items-center gap-6 relative z-10">
               <div className="w-12 h-12 border-4 border-[#00f3ff22] border-t-[#00f3ff] rounded-full animate-spin"></div>
@@ -75,7 +75,7 @@ const PartDetailPopup: React.FC<PartDetailPopupProps> = ({ part, onClose }) => {
               </div>
             </div>
           )}
-          
+
           <div className="absolute bottom-6 left-6 text-[7px] text-gray-700 font-mono tracking-[0.3em] uppercase space-y-1">
             <div>UID: {part.id.toUpperCase()}</div>
             <div>SPEC_TYPE: HARDWARE_SCHEMA_V2</div>
@@ -86,15 +86,15 @@ const PartDetailPopup: React.FC<PartDetailPopupProps> = ({ part, onClose }) => {
         <div className="flex-1 p-10 overflow-y-auto custom-scrollbar flex flex-col gap-8 bg-[radial-gradient(circle_at_top_right,_#0a0a0f_0%,_#050505_100%)]">
           <header className="space-y-4">
             <div className="flex items-center gap-4">
-               <div className="w-10 h-10 border border-[#00f3ff] flex items-center justify-center">
-                  <svg className="w-6 h-6 text-[#00f3ff]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round"/>
-                    <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-               </div>
-               <h2 className="text-4xl font-black cyber-font italic text-white uppercase tracking-tighter leading-none glitch-text">
-                 {part.name}
-               </h2>
+              <div className="w-10 h-10 border border-[#00f3ff] flex items-center justify-center">
+                <svg className="w-6 h-6 text-[#00f3ff]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <h2 className="text-4xl font-black cyber-font italic text-white uppercase tracking-tighter leading-none glitch-text">
+                {part.name}
+              </h2>
             </div>
             <div className="flex flex-wrap gap-4">
               <span className="text-[10px] px-3 py-1 bg-[#00f3ff11] border border-[#00f3ff] text-[#00f3ff] font-black uppercase tracking-widest">{part.category}</span>
@@ -103,11 +103,11 @@ const PartDetailPopup: React.FC<PartDetailPopupProps> = ({ part, onClose }) => {
           </header>
 
           <section className="space-y-3">
-             <div className="h-px bg-gradient-to-r from-[#ff00ff44] to-transparent w-32"></div>
-             <h4 className="text-[11px] text-[#ff00ff] font-black uppercase tracking-[0.4em]">Neural Technical Abstract</h4>
-             <p className="text-xs text-gray-300 leading-relaxed italic font-mono uppercase tracking-tight relative bg-black/40 p-4 border-l-2 border-[#ff00ff]">
-               {realInfo?.abstract || (loading ? 'Decoding bitstream...' : 'Technical summary currently unavailable. Public documentation confirms this as a core modular component for signal synthesis.')}
-             </p>
+            <div className="h-px bg-gradient-to-r from-[#ff00ff44] to-transparent w-32"></div>
+            <h4 className="text-[11px] text-[#ff00ff] font-black uppercase tracking-[0.4em]">Neural Technical Abstract</h4>
+            <p className="text-xs text-gray-300 leading-relaxed italic font-mono uppercase tracking-tight relative bg-black/40 p-4 border-l-2 border-[#ff00ff]">
+              {realInfo?.abstract || (loading ? 'Decoding bitstream...' : 'Technical summary currently unavailable. Public documentation confirms this as a core modular component for signal synthesis.')}
+            </p>
           </section>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
@@ -116,7 +116,7 @@ const PartDetailPopup: React.FC<PartDetailPopupProps> = ({ part, onClose }) => {
               <ul className="space-y-3">
                 {(realInfo?.specs || ['HIGH_DENSITY_I/O', 'LOW_THERMAL_BLEED', 'NEURAL_OPTIMIZED']).map((spec, i) => (
                   <li key={i} className="text-[11px] text-gray-200 font-mono flex items-start gap-3">
-                    <span className="text-[#00f3ff] animate-pulse">»</span> 
+                    <span className="text-[#00f3ff] animate-pulse">»</span>
                     <span className="uppercase">{spec}</span>
                   </li>
                 ))}
@@ -126,23 +126,23 @@ const PartDetailPopup: React.FC<PartDetailPopupProps> = ({ part, onClose }) => {
             <section className="space-y-4">
               <h4 className="text-[10px] text-gray-600 font-black uppercase tracking-[0.4em] border-b border-gray-900 pb-2">Neural Procurement</h4>
               <div className="grid grid-cols-1 gap-3">
-                <a 
-                  href={aliexpressLink} 
-                  target="_blank" 
+                <a
+                  href={aliexpressLink}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="p-4 bg-black border border-[#ff00ff44] group hover:border-[#ff00ff] hover:bg-[#ff00ff11] transition-all flex items-center justify-between"
                 >
-                   <span className="text-[10px] text-[#ff00ff] font-black uppercase tracking-widest">Source via AliExpress</span>
-                   <span className="text-[#ff00ff] opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  <span className="text-[10px] text-[#ff00ff] font-black uppercase tracking-widest">Source via AliExpress</span>
+                  <span className="text-[#ff00ff] opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                 </a>
-                <a 
-                  href={amazonLink} 
-                  target="_blank" 
+                <a
+                  href={amazonLink}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="p-4 bg-black border border-[#00f3ff44] group hover:border-[#00f3ff] hover:bg-[#00f3ff11] transition-all flex items-center justify-between"
                 >
-                   <span className="text-[10px] text-[#00f3ff] font-black uppercase tracking-widest">Source via Amazon</span>
-                   <span className="text-[#00f3ff] opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  <span className="text-[10px] text-[#00f3ff] font-black uppercase tracking-widest">Source via Amazon</span>
+                  <span className="text-[#00f3ff] opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                 </a>
               </div>
             </section>
@@ -150,14 +150,14 @@ const PartDetailPopup: React.FC<PartDetailPopupProps> = ({ part, onClose }) => {
 
           <footer className="mt-auto pt-8 border-t border-gray-900 flex justify-between items-end text-[9px] text-gray-700 font-mono">
             <div className="space-y-1">
-               <div>DATA_SOURCE: REAL_WORLD_NEURAL_QUERY</div>
-               <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
-                  STATUS: VERIFIED_DATA_LINK
-               </div>
+              <div>DATA_SOURCE: REAL_WORLD_NEURAL_QUERY</div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
+                STATUS: VERIFIED_DATA_LINK
+              </div>
             </div>
             <div className="text-right italic opacity-50 uppercase font-black">
-               &copy; CyberForge Syndicate // Procurement Protocol
+              &copy; CyberForge Syndicate // Procurement Protocol
             </div>
           </footer>
         </div>

@@ -242,7 +242,7 @@ export const ComponentsView: React.FC<ComponentsViewProps> = ({
 
             {/* Add/Edit Modal */}
             {isModalOpen && createPortal(
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-start justify-center pt-24 p-4">
                     <div className="w-full max-w-lg bg-[#0a0a0f] border border-[#00f3ff] p-1 relative shadow-[0_0_50px_#00f3ff22] animate-in fade-in zoom-in duration-200">
                         {/* Corner decorations */}
                         <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-[#00f3ff]"></div>
@@ -350,7 +350,7 @@ export const ComponentsView: React.FC<ComponentsViewProps> = ({
 
             {/* Category Manager Modal */}
             {isCatManOpen && createPortal(
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[110] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[110] flex items-start justify-center pt-24 p-4">
                     <div className="w-full max-w-md bg-[#0a0a0f] border border-gray-700 p-8 space-y-6 shadow-2xl">
                         <div className="flex justify-between items-center">
                             <h3 className="text-lg font-black text-white uppercase tracking-widest">Category_Protocols</h3>
@@ -384,7 +384,7 @@ export const ComponentsView: React.FC<ComponentsViewProps> = ({
                                         <img src={StorageService.getCategoryIcon(cat)} className="w-5 h-5 object-contain bg-black/50 p-0.5 rounded" />
                                         <span className="text-xs font-mono text-gray-300">{cat}</span>
                                     </div>
-                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-2">
                                         <button
                                             onClick={() => {
                                                 const newName = prompt("Rename Category:", cat);
@@ -396,9 +396,16 @@ export const ComponentsView: React.FC<ComponentsViewProps> = ({
                                         </button>
                                         <button
                                             onClick={() => {
-                                                if (confirm(`Delete category "${cat}"? Parts will be moved to 'Passive'.`)) onRemoveCategory(cat);
+                                                const hasParts = parts.some(p => p.category === cat);
+                                                if (hasParts) {
+                                                    alert("ACCESS DENIED: Category contains active components. Purge or reassign components before deletion.");
+                                                    return;
+                                                }
+                                                if (confirm(`Delete category "${cat}"?`)) onRemoveCategory(cat);
                                             }}
-                                            className="text-[10px] text-red-500 hover:underline uppercase"
+                                            disabled={parts.some(p => p.category === cat)}
+                                            className={`text-[10px] uppercase hover:underline ${parts.some(p => p.category === cat) ? 'text-gray-600 cursor-not-allowed' : 'text-red-500'}`}
+                                            title={parts.some(p => p.category === cat) ? "Category not empty" : "Delete Category"}
                                         >
                                             DELETE
                                         </button>
