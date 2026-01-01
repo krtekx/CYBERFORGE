@@ -22,7 +22,7 @@ export const GalleryView: React.FC<GalleryViewProps> = ({ onClone }) => {
 
     // Filters & Sorting state
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterType, setFilterType] = useState<'all' | 'forged' | 'manual'>('all');
+    // Removed filterType state as requested
     const [filterMaterial, setFilterMaterial] = useState<'all' | 'brass' | 'acrylic' | 'plywood'>('all');
     const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
 
@@ -72,17 +72,12 @@ export const GalleryView: React.FC<GalleryViewProps> = ({ onClone }) => {
             result = result.filter(img => img.name.toLowerCase().includes(q));
         }
 
-        // 2. Filter Type
-        if (filterType !== 'all') {
-            result = result.filter(img => img.type === filterType);
-        }
-
-        // 3. Filter Material
+        // 2. Filter Material
         if (filterMaterial !== 'all') {
             result = result.filter(img => img.material === filterMaterial);
         }
 
-        // 4. Sort
+        // 3. Sort
         result.sort((a, b) => {
             switch (sortBy) {
                 case 'az':
@@ -112,7 +107,7 @@ export const GalleryView: React.FC<GalleryViewProps> = ({ onClone }) => {
             }
         });
         return result;
-    }, [images, searchQuery, filterType, filterMaterial, sortBy]);
+    }, [images, searchQuery, filterMaterial, sortBy]);
 
     const handleClone = async (img: GalleryImage, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -196,17 +191,6 @@ export const GalleryView: React.FC<GalleryViewProps> = ({ onClone }) => {
 
                         {/* Filters */}
                         <div className="flex gap-2 shrink-0">
-                            {/* Source Filter */}
-                            <select
-                                value={filterType}
-                                onChange={(e) => setFilterType(e.target.value as any)}
-                                className="h-10 bg-black border border-gray-800 text-gray-400 text-[10px] font-black uppercase tracking-wider px-3 focus:outline-none focus:border-[#00f3ff] hover:border-gray-600 transition-colors"
-                            >
-                                <option value="all">ALL SOURCES</option>
-                                <option value="forged">FORGED (AI)</option>
-                                <option value="manual">MANUAL UPLOAD</option>
-                            </select>
-
                             {/* Material Filter */}
                             <select
                                 value={filterMaterial}
@@ -242,8 +226,8 @@ export const GalleryView: React.FC<GalleryViewProps> = ({ onClone }) => {
                         <p className="text-gray-600 font-mono uppercase tracking-widest">
                             NO MATCHING BLUEPRINTS FOUND
                         </p>
-                        {(searchQuery || filterType !== 'all' || filterMaterial !== 'all') && (
-                            <button onClick={() => { setSearchQuery(''); setFilterType('all'); setFilterMaterial('all'); }} className="mt-4 text-[#00f3ff] text-xs font-black uppercase hover:underline">
+                        {(searchQuery || filterMaterial !== 'all') && (
+                            <button onClick={() => { setSearchQuery(''); setFilterMaterial('all'); }} className="mt-4 text-[#00f3ff] text-xs font-black uppercase hover:underline">
                                 CLEAR FILTERS
                             </button>
                         )}
