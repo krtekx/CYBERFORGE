@@ -2,7 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MachineDesign, Part, MachineConfig, BOMItem } from "../types";
 import { ApiKeyManager } from "./apiKeyManager";
 
-export const CURRENT_IMAGE_MODEL = "imagen-3.0-generate-001";
+export const CURRENT_IMAGE_MODEL = "gemini-3.0-flash-image";
 
 const cleanJsonResponse = (text: string) => {
   return text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -229,16 +229,16 @@ export const generateImageForDesign = async (
   `;
 
     try {
-      // Try Imagen 3 first
+      // Try Gemini 3.0 Pro / Flash first
       const response = await ai.models.generateContent({
-        model: 'imagen-3.0-generate-001',
+        model: 'gemini-3.0-flash-image',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
       const img = extractInlineImage(response);
       if (img) return img;
     } catch (err) {
-      console.warn("Imagen 3 generation failed, falling back to Gemini 2.5 Flash:", err);
+      console.warn("Gemini 3 generation failed, falling back to Gemini 2.5 Flash:", err);
     }
 
     // Fallback or if first attempt yielded no image (though catch handles errors)
@@ -273,16 +273,16 @@ export const generateCategoryIcon = async (category: string): Promise<string | u
     `;
 
     try {
-      // Try Imagen 3
+      // Try Gemini 3
       const response = await ai.models.generateContent({
-        model: 'imagen-3.0-generate-001',
+        model: 'gemini-3.0-flash-image',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
       const img = extractInlineImage(response);
       if (img) return img;
     } catch (err) {
-      console.warn("Imagen 3 icon generation failed, falling back to Gemini 2.5 Flash:", err);
+      console.warn("Gemini 3 icon generation failed, falling back to Gemini 2.5 Flash:", err);
     }
 
     try {
@@ -337,16 +337,16 @@ export const generatePartDocumentation = async (partName: string): Promise<strin
       const prompt = `Detailed technical line art blueprint of ${partName}. Schematic lines only, dark grid background.`;
 
       try {
-        // Try Imagen 3
+        // Try Gemini 3
         const response = await ai.models.generateContent({
-          model: 'imagen-3.0-generate-001',
+          model: 'gemini-3.0-flash-image',
           contents: { parts: [{ text: prompt }] },
           config: { imageConfig: { aspectRatio: "1:1" } }
         });
         const img = extractInlineImage(response);
         if (img) return img;
       } catch (err) {
-        console.warn("Imagen 3 documentation generation failed, falling back to Gemini 2.5 Flash:", err);
+        console.warn("Gemini 3 documentation generation failed, falling back to Gemini 2.5 Flash:", err);
       }
 
       // Fallback
