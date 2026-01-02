@@ -2,7 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MachineDesign, Part, MachineConfig, BOMItem } from "../types";
 import { ApiKeyManager } from "./apiKeyManager";
 
-export const CURRENT_IMAGE_MODEL = "gemini-3.0-pro-image";
+export const CURRENT_IMAGE_MODEL = "gemini-3.0-flash";
 
 const cleanJsonResponse = (text: string) => {
   return text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -152,7 +152,7 @@ export const generateDesigns = async (parts: Part[], config: MachineConfig): Pro
   `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.0-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -211,7 +211,6 @@ export const generateImageForDesign = async (
 
     const accents = `${config.brassWires ? 'EXPOSED POINT-TO-POINT BRASS WIRING.' : ''} ${config.brassLight ? 'WARM BRASS FILAMENT LIGHT HOUSINGS.' : ''}`;
 
-    // Visual complexity based on difficulty
     const visualComplexity = {
       'Easy': "MINIMAL DESIGN: Show ONLY 2-3 visible electronic components on a simple construction base. Clean, spacious layout with lots of empty space. Beginner-friendly appearance. Very few wires, direct connections only.",
       'Moderate': "BALANCED DESIGN: Show 5-8 visible components with moderate wiring. Organized layout with clear component placement. Some complexity but still readable.",
@@ -229,16 +228,16 @@ export const generateImageForDesign = async (
   `;
 
     try {
-      // Try Gemini 3.0 Pro / Flash first
+      // Try Gemini 3.0 Flash text/image
       const response = await ai.models.generateContent({
-        model: 'gemini-3.0-pro-image',
+        model: 'gemini-3.0-flash',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
       const img = extractInlineImage(response);
       if (img) return img;
     } catch (err) {
-      console.warn("Gemini 3 generation failed, falling back to Gemini 2.5 Flash:", err);
+      console.warn("Gemini 3 Flash generation failed, falling back to Gemini 2.5 Flash Image:", err);
     }
 
     // Fallback or if first attempt yielded no image (though catch handles errors)
@@ -273,16 +272,16 @@ export const generateCategoryIcon = async (category: string): Promise<string | u
     `;
 
     try {
-      // Try Gemini 3
+      // Try Gemini 3 Flash
       const response = await ai.models.generateContent({
-        model: 'gemini-3.0-pro-image',
+        model: 'gemini-3.0-flash',
         contents: { parts: [{ text: prompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
       const img = extractInlineImage(response);
       if (img) return img;
     } catch (err) {
-      console.warn("Gemini 3 icon generation failed, falling back to Gemini 2.5 Flash:", err);
+      console.warn("Gemini 3 Flash icon generation failed, falling back to Gemini 2.5 Flash:", err);
     }
 
     try {
@@ -337,16 +336,16 @@ export const generatePartDocumentation = async (partName: string): Promise<strin
       const prompt = `Detailed technical line art blueprint of ${partName}. Schematic lines only, dark grid background.`;
 
       try {
-        // Try Gemini 3
+        // Try Gemini 3 Flash
         const response = await ai.models.generateContent({
-          model: 'gemini-3.0-pro-image',
+          model: 'gemini-3.0-flash',
           contents: { parts: [{ text: prompt }] },
           config: { imageConfig: { aspectRatio: "1:1" } }
         });
         const img = extractInlineImage(response);
         if (img) return img;
       } catch (err) {
-        console.warn("Gemini 3 documentation generation failed, falling back to Gemini 2.5 Flash:", err);
+        console.warn("Gemini 3 Flash documentation generation failed, falling back to Gemini 2.5 Flash:", err);
       }
 
       // Fallback
@@ -371,7 +370,7 @@ export const generateRealPartAbstract = async (partName: string): Promise<{ abst
     return await executeWithRetry(async () => {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.0-flash',
         contents: `Provide a real technical summary and 4 key specs for: ${partName}.`,
         config: {
           responseMimeType: "application/json",
@@ -417,7 +416,7 @@ export const analyzeProductLink = async (url: string): Promise<{ name: string; c
       `;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.0-flash',
         contents: prompt,
         config: {
           responseMimeType: "application/json",
