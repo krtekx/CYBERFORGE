@@ -2,7 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MachineDesign, Part, MachineConfig, BOMItem } from "../types";
 import { ApiKeyManager } from "./apiKeyManager";
 
-export const CURRENT_IMAGE_MODEL = "gemini-3.0-flash";
+export const CURRENT_IMAGE_MODEL = "gemini-2.5-flash-image";
 
 const cleanJsonResponse = (text: string) => {
   return text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -152,7 +152,7 @@ export const generateDesigns = async (parts: Part[], config: MachineConfig): Pro
   `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.0-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -228,29 +228,17 @@ export const generateImageForDesign = async (
   `;
 
     try {
-      // Try Gemini 3.0 Flash text/image
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.0-flash',
-        contents: { parts: [{ text: prompt }] },
-        config: { imageConfig: { aspectRatio: "1:1" } }
-      });
-      const img = extractInlineImage(response);
-      if (img) return img;
-    } catch (err) {
-      console.warn("Gemini 3 Flash generation failed, falling back to Gemini 2.5 Flash Image:", err);
-    }
-
-    // Fallback or if first attempt yielded no image (though catch handles errors)
-    try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: prompt }] }
       });
-      return extractInlineImage(response);
+      const img = extractInlineImage(response);
+      if (img) return img;
     } catch (err) {
-      console.error("Fallback image generation failed:", err);
-      throw err;
+      console.error("Image generation failed:", err);
+      throw err; // Re-throw to trigger retry logic
     }
+    return undefined;
   }, 2, 2000).catch(err => {
     console.error("Image generation failed after retries:", err);
     return undefined; // Return undefined instead of throwing for images
@@ -272,20 +260,6 @@ export const generateCategoryIcon = async (category: string): Promise<string | u
     `;
 
     try {
-      // Try Gemini 3 Flash
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.0-flash',
-        contents: { parts: [{ text: prompt }] },
-        config: { imageConfig: { aspectRatio: "1:1" } }
-      });
-      const img = extractInlineImage(response);
-      if (img) return img;
-    } catch (err) {
-      console.warn("Gemini 3 Flash icon generation failed, falling back to Gemini 2.5 Flash:", err);
-    }
-
-    try {
-      // Fallback: Gemini 2.5 Flash
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: prompt }] }
@@ -293,11 +267,11 @@ export const generateCategoryIcon = async (category: string): Promise<string | u
       const img = extractInlineImage(response);
       if (img) return img;
     } catch (err) {
-      console.warn("Flash icon gen failed, falling back to SVG:", err);
+      console.error("Icon gen failed:", err);
+      // Fallback: Generate SVG code using text model
+      return generateSVGIcon(category);
     }
-
-    // Fallback: SVG
-    return generateSVGIcon(category);
+    return undefined;
   }, 2, 2000);
 };
 
@@ -335,20 +309,6 @@ export const generatePartDocumentation = async (partName: string): Promise<strin
       const ai = new GoogleGenAI({ apiKey });
       const prompt = `Detailed technical line art blueprint of ${partName}. Schematic lines only, dark grid background.`;
 
-      try {
-        // Try Gemini 3 Flash
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.0-flash',
-          contents: { parts: [{ text: prompt }] },
-          config: { imageConfig: { aspectRatio: "1:1" } }
-        });
-        const img = extractInlineImage(response);
-        if (img) return img;
-      } catch (err) {
-        console.warn("Gemini 3 Flash documentation generation failed, falling back to Gemini 2.5 Flash:", err);
-      }
-
-      // Fallback
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: prompt }] },
@@ -370,7 +330,7 @@ export const generateRealPartAbstract = async (partName: string): Promise<{ abst
     return await executeWithRetry(async () => {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: 'gemini-3.0-flash',
+        model: 'gemini-2.5-flash',
         contents: `Provide a real technical summary and 4 key specs for: ${partName}.`,
         config: {
           responseMimeType: "application/json",
@@ -416,7 +376,7 @@ export const analyzeProductLink = async (url: string): Promise<{ name: string; c
       `;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.0-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
           responseMimeType: "application/json",
